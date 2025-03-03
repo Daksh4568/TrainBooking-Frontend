@@ -12,7 +12,8 @@ const Signup = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        // "http://localhost:5000/api/auth/login",
+        "https://trainbooking-fg34.onrender.com/api/auth/signup",
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );

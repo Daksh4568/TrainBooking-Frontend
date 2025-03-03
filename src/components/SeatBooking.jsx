@@ -2,47 +2,93 @@
 // import axios from "axios";
 
 // const SeatBooking = () => {
-//   const totalSeats = 80;
+//   const [totalSeats, setTotalSeats] = useState(null);
 //   const [bookedSeats, setBookedSeats] = useState([]);
+//   const [availableSeats, setAvailableSeats] = useState(null);
 
-//   // Fetch booked seats from API
-//   useEffect(() => {
-//     const fetchBookedSeats = async () => {
-//       const token = localStorage.getItem("token");
-//       if (!token) {
-//         console.error("No token found");
-//         return;
-//       }
+//   const fetchSeatsData = async () => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found");
+//       return;
+//     }
 
-//       try {
-//         const response = await axios.get("http://localhost:5000/api/seats/", {
+//     try {
+//       const response = await axios.get(
+//         "https://trainbooking-fg34.onrender.com/api/seats",
+//         {
 //           headers: { Authorization: `Bearer ${token}` },
-//         });
-
-//         if (
-//           response.status === 200 &&
-//           Array.isArray(response.data.bookedSeats)
-//         ) {
-//           setBookedSeats(response.data.bookedSeats); // Store seat names directly
-//         } else {
-//           console.error("Unexpected API response:", response.data);
 //         }
-//       } catch (error) {
-//         console.error(
-//           "Error fetching booked seats:",
-//           error.response?.data || error.message
-//         );
-//       }
-//     };
+//       );
 
-//     fetchBookedSeats();
+//       if (response.status === 200 && Array.isArray(response.data.seats)) {
+//         const seats = response.data.seats;
+
+//         // Extract booked seat numbers
+//         const bookedSeats = seats
+//           .filter((seat) => seat.isBooked) // Get only booked seats
+//           .map((seat) => seat.seatNo); // Extract seat numbers
+
+//         setTotalSeats(seats.length);
+//         setBookedSeats(bookedSeats);
+//         setAvailableSeats(seats.filter((seat) => !seat.isBooked).length);
+//       } else {
+//         console.error("Unexpected API response:", response.data);
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error fetching seat data:",
+//         error.response?.data || error.message
+//       );
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchSeatsData();
 //   }, []);
 
 //   // Handle seat booking request
+//   // const handleBookSeats = async (event) => {
+//   //   event.preventDefault();
+//   //   const numSeats = parseInt(event.target.seats.value, 10);
+//   //   if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) return;
+
+//   //   const token = localStorage.getItem("token");
+//   //   if (!token) {
+//   //     console.error("No token found. Please log in.");
+//   //     return;
+//   //   }
+
+//   //   try {
+//   //     const response = await axios.patch(
+//   //       "https://trainbooking-fg34.onrender.com/api/seats/book",
+//   //       { seats: numSeats },
+//   //       { headers: { Authorization: `Bearer ${token}` } }
+//   //     );
+
+//   //     if (response.status === 200 && Array.isArray(response.data)) {
+//   //       const newBookedSeats = new Set([...bookedSeats, ...response.data]); // Merge previous and new bookings
+//   //       setBookedSeats(Array.from(newBookedSeats)); // Convert Set back to array
+//   //       setAvailableSeats(totalSeats - newBookedSeats.size);
+//   //     } else {
+//   //       console.error("Unexpected API response:", response.data);
+//   //     }
+//   //   } catch (error) {
+//   //     console.error(
+//   //       "Error booking seats:",
+//   //       error.response?.data || error.message
+//   //     );
+//   //   }
+//   // };
+
 //   const handleBookSeats = async (event) => {
 //     event.preventDefault();
 //     const numSeats = parseInt(event.target.seats.value, 10);
-//     if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) return;
+
+//     if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) {
+//       console.error("Invalid seat number.");
+//       return;
+//     }
 
 //     const token = localStorage.getItem("token");
 //     if (!token) {
@@ -52,13 +98,22 @@
 
 //     try {
 //       const response = await axios.patch(
-//         "http://localhost:5000/api/seats/book",
+//         "https://trainbooking-fg34.onrender.com/api/seats/book",
 //         { seats: numSeats },
 //         { headers: { Authorization: `Bearer ${token}` } }
 //       );
 
+//       console.log("Booking Response:", response.data); // Debugging log
+
 //       if (response.status === 200 && Array.isArray(response.data)) {
-//         setBookedSeats(response.data); // Store seat names directly
+//         setBookedSeats((prevBookedSeats) => [
+//           ...prevBookedSeats,
+//           ...response.data,
+//         ]);
+//         setAvailableSeats(
+//           (prevAvailable) => prevAvailable - response.data.length
+//         );
+//         fetchSeatsData();
 //       } else {
 //         console.error("Unexpected API response:", response.data);
 //       }
@@ -70,51 +125,100 @@
 //     }
 //   };
 
+//   const handleResetBookings = async () => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found. Please log in.");
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.patch(
+//         "https://trainbooking-fg34.onrender.com/api/seats/reset",
+//         {},
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+
+//       if (response.status === 200) {
+//         setBookedSeats(new Set()); // Clear booked seats
+//         setAvailableSeats(totalSeats); // All seats become available
+//         alert("Seats Reset successfully");
+//       } else {
+//         console.error("Unexpected API response:", response.data);
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error resetting bookings:",
+//         error.response?.data || error.message
+//       );
+//     }
+//   };
+
 //   return (
 //     <div className="flex justify-center items-center min-h-screen bg-gray-200">
-//       <div className="bg-white p-6 rounded-lg shadow-md w-2/3 flex flex-col md:flex-row">
+//       <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col md:flex-row">
 //         <div className="flex-1">
 //           <h2 className="text-xl font-bold text-center mb-4">Ticket Booking</h2>
+
+//           {/* Seat Grid */}
 //           <div className="grid grid-cols-7 gap-2">
-//             {Array.from(
-//               { length: totalSeats },
-//               (_, i) => `Row ${Math.floor(i / 7) + 1} Seat ${(i % 7) + 1}`
-//             ).map((seat) => (
-//               <div
-//                 key={seat}
-//                 className={`w-20 h-10 flex items-center justify-center rounded-md text-white font-bold transition ${
-//                   bookedSeats.includes(seat) ? "bg-red-500" : "bg-green-500"
-//                 }`}
-//               >
-//                 {seat}
-//               </div>
-//             ))}
+//             {totalSeats &&
+//               Array.from({ length: totalSeats }, (_, i) => {
+//                 const seatNo = i + 1; // Seat number (1-based index)
+//                 return (
+//                   <div
+//                     key={seatNo}
+//                     className={`w-20 h-10 flex items-center justify-center rounded-md text-white font-bold transition ${
+//                       bookedSeats.includes(seatNo)
+//                         ? "bg-red-500"
+//                         : "bg-green-500"
+//                     }`}
+//                   >
+//                     {`Seat ${seatNo}`}
+//                   </div>
+//                 );
+//               })}
 //           </div>
+
+//           {/* Booking Status */}
 //           <div className="flex justify-between mt-4 p-2">
 //             <span className="bg-yellow-500 px-3 py-1 rounded text-white">
 //               Booked Seats: {bookedSeats.length}
 //             </span>
 //             <span className="bg-green-500 px-3 py-1 rounded text-white">
-//               Available Seats: {totalSeats - bookedSeats.length}
+//               Available Seats:{" "}
+//               {availableSeats !== null ? availableSeats : "Loading..."}
 //             </span>
 //           </div>
 //         </div>
+
+//         {/* Booking Form */}
 //         <div className="flex-1 flex flex-col items-center justify-center">
 //           <h3 className="text-lg font-bold mb-2">Book Seats</h3>
-//           <form onSubmit={handleBookSeats} className="flex space-x-2">
+//           <form
+//             onSubmit={handleBookSeats}
+//             className="grid grid-col-2 space-x-2"
+//           >
 //             <input
 //               type="number"
 //               name="seats"
 //               placeholder="Enter number of seats (1-7)"
 //               min="1"
 //               max="7"
-//               className="border rounded px-2 py-1"
+//               className="border rounded px-2 py-1 col-span-2"
 //             />
 //             <button
 //               type="submit"
-//               className="bg-blue-500 text-white px-4 py-1 rounded"
+//               className="bg-blue-500 text-white px-4 py-1 rounded col-span-2"
 //             >
 //               Book
+//             </button>
+//             <button
+//               type="submit"
+//               onClick={handleResetBookings}
+//               className="bg-red-500 text-white px-4 py-1 rounded col-span-1"
+//             >
+//               Reset Booking
 //             </button>
 //           </form>
 //         </div>
@@ -124,15 +228,207 @@
 // };
 
 // export default SeatBooking;
+
+// import { useState, useEffect } from "react";
+// import axios from "axios";
+
+// const SeatBooking = () => {
+//   const [totalSeats, setTotalSeats] = useState(null);
+//   const [bookedSeats, setBookedSeats] = useState([]);
+//   const [availableSeats, setAvailableSeats] = useState(null);
+
+//   // Fetch seat data from API
+//   const fetchSeatsData = async () => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found");
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.get(
+//         "https://trainbooking-fg34.onrender.com/api/seats",
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+
+//       if (response.status === 200 && Array.isArray(response.data.seats)) {
+//         const seats = response.data.seats;
+//         const bookedSeatsList = seats
+//           .filter((seat) => seat.isBooked)
+//           .map((seat) => seat.seatNo);
+
+//         setTotalSeats(seats.length);
+//         setBookedSeats(bookedSeatsList);
+//         setAvailableSeats(seats.length - bookedSeatsList.length);
+//       } else {
+//         console.error("Unexpected API response:", response.data);
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error fetching seat data:",
+//         error.response?.data || error.message
+//       );
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchSeatsData();
+//   }, []);
+
+//   const handleBookSeats = async (event) => {
+//     event.preventDefault();
+//     const numSeats = parseInt(event.target.seats.value, 10);
+
+//     if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) {
+//       console.error("Invalid seat number.");
+//       return;
+//     }
+
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found. Please log in.");
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.patch(
+//         "https://trainbooking-fg34.onrender.com/api/seats/book",
+//         { seats: numSeats },
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+
+//       if (response.status === 200 && Array.isArray(response.data)) {
+//         setBookedSeats((prevBookedSeats) => [
+//           ...prevBookedSeats,
+//           ...response.data,
+//         ]);
+//         setAvailableSeats(
+//           (prevAvailable) => prevAvailable - response.data.length
+//         );
+//         fetchSeatsData(); // Fetch latest seat status
+//       } else {
+//         console.error("Unexpected API response:", response.data);
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error booking seats:",
+//         error.response?.data || error.message
+//       );
+//     }
+//   };
+
+//   const handleResetBookings = async () => {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found. Please log in.");
+//       return;
+//     }
+
+//     try {
+//       const response = await axios.patch(
+//         "https://trainbooking-fg34.onrender.com/api/seats/reset",
+//         {},
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+
+//       if (response.status === 200) {
+//         fetchSeatsData(); // Refresh seat data
+//         alert("Seats Reset successfully");
+//       } else {
+//         console.error("Unexpected API response:", response.data);
+//       }
+//     } catch (error) {
+//       console.error(
+//         "Error resetting bookings:",
+//         error.response?.data || error.message
+//       );
+//     }
+//   };
+
+//   return (
+//     <div className="flex justify-center items-center min-h-screen bg-gray-200">
+//       <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col md:flex-row">
+//         <div className="flex-1">
+//           <h2 className="text-xl font-bold text-center mb-4">Ticket Booking</h2>
+
+//           {/* Seat Grid */}
+//           <div className="grid grid-cols-7 gap-2">
+//             {totalSeats &&
+//               Array.from({ length: totalSeats }, (_, i) => {
+//                 const seatNo = i + 1;
+//                 return (
+//                   <div
+//                     key={seatNo}
+//                     className={`w-20 h-10 gap-2 flex items-center justify-center rounded-md text-white font-bold transition ${
+//                       bookedSeats.includes(seatNo)
+//                         ? "bg-red-500"
+//                         : "bg-green-500"
+//                     }`}
+//                   >
+//                     {`Seat ${seatNo}`}
+//                   </div>
+//                 );
+//               })}
+//           </div>
+
+//           {/* Booking Status */}
+//           <div className="flex justify-between mt-4 p-2">
+//             <span className="bg-yellow-500 px-3 py-1 rounded text-white">
+//               Booked Seats: {bookedSeats.length}
+//             </span>
+//             <span className="bg-green-500 px-3 py-1 rounded text-white">
+//               Available Seats:{" "}
+//               {availableSeats !== null ? availableSeats : "Loading..."}
+//             </span>
+//           </div>
+//         </div>
+
+//         {/* Booking Form */}
+//         <div className="flex-1 flex flex-col items-center justify-center">
+//           <h3 className="text-lg font-bold mb-2">Book Seats</h3>
+//           <form
+//             onSubmit={handleBookSeats}
+//             className="grid grid-col-2 space-x-2"
+//           >
+//             <input
+//               type="number"
+//               name="seats"
+//               placeholder="Enter number of seats (1-7)"
+//               min="1"
+//               max="7"
+//               className="border rounded px-2 py-1 col-span-2"
+//             />
+//             <button
+//               type="submit"
+//               className="bg-blue-500 text-white px-4 py-1 rounded col-span-2"
+//             >
+//               Book
+//             </button>
+//             <button
+//               type="button"
+//               onClick={handleResetBookings}
+//               className="bg-red-500 text-white px-4 py-1 rounded col-span-1"
+//             >
+//               Reset Booking
+//             </button>
+//           </form>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default SeatBooking;
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 
 const SeatBooking = () => {
-  const [totalSeats, setTotalSeats] = useState(null);
+  const [totalSeats, setTotalSeats] = useState(80);
   const [bookedSeats, setBookedSeats] = useState([]);
-  const [availableSeats, setAvailableSeats] = useState(null);
+  const [availableSeats, setAvailableSeats] = useState(80);
 
-  // Fetch seats data from API
+  // Fetch seat data from API
   const fetchSeatsData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -141,24 +437,23 @@ const SeatBooking = () => {
     }
 
     try {
-      const response = await axios.get("http://localhost:5000/api/seats/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        "https://trainbooking-fg34.onrender.com/api/seats",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      if (
-        response.status === 200 &&
-        typeof response.data.totalAvailableSeats === "number" &&
-        Array.isArray(response.data.seats)
-      ) {
-        const totalSeats = response.data.seats.length; // Total seats from API
-        const bookedSeats = response.data.seats.slice(
-          0,
-          totalSeats - response.data.totalAvailableSeats
-        ); // First N seats are booked
+      // console.log("Fetched seats data:", response.data); // Debugging
 
-        setTotalSeats(totalSeats);
-        setBookedSeats(bookedSeats);
-        setAvailableSeats(response.data.totalAvailableSeats);
+      if (response.status === 200 && Array.isArray(response.data.seats)) {
+        const bookedSeatsList = response.data.seats
+          .filter((seat) => seat.isBooked)
+          .map((seat) => `${seat.rowNumber}-${seat.seatNo}`); // Create unique identifier
+
+        // console.log("Unique boosked seats list:", bookedSeatsList); // Debugging
+
+        setBookedSeats(bookedSeatsList);
+        setTotalSeats(response.data.seats.length);
+        setAvailableSeats(response.data.seats.length - bookedSeatsList.length);
       } else {
         console.error("Unexpected API response:", response.data);
       }
@@ -174,28 +469,40 @@ const SeatBooking = () => {
     fetchSeatsData();
   }, []);
 
-  // Handle seat booking request
   const handleBookSeats = async (event) => {
     event.preventDefault();
     const numSeats = parseInt(event.target.seats.value, 10);
-    if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) return;
+
+    if (isNaN(numSeats) || numSeats < 1 || numSeats > 7) {
+      alert("Please enter a valid number of seats (1-7).");
+      return;
+    }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No token found. Please log in.");
+      alert("No token found. Please log in.");
       return;
     }
 
     try {
       const response = await axios.patch(
-        "http://localhost:5000/api/seats/book",
+        "https://trainbooking-fg34.onrender.com/api/seats/book",
         { seats: numSeats },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200 && Array.isArray(response.data)) {
-        setBookedSeats(response.data); // Update booked seats list
-        setAvailableSeats(totalSeats - response.data.length); // Update available seats
+        const newBookedSeats = response.data.map((seat) => Number(seat));
+
+        setBookedSeats((prevBookedSeats) => [
+          ...prevBookedSeats,
+          ...newBookedSeats,
+        ]);
+        setAvailableSeats(
+          (prevAvailable) => prevAvailable - newBookedSeats.length
+        );
+
+        setTimeout(fetchSeatsData, 1000); // Fetch fresh seat data after a delay
       } else {
         console.error("Unexpected API response:", response.data);
       }
@@ -207,29 +514,64 @@ const SeatBooking = () => {
     }
   };
 
+  const handleResetBookings = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("No token found. Please log in.");
+      return;
+    }
+
+    try {
+      const response = await axios.patch(
+        "https://trainbooking-fg34.onrender.com/api/seats/reset",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        setBookedSeats([]);
+        setAvailableSeats(totalSeats);
+        fetchSeatsData();
+        alert("Seats Reset successfully");
+      } else {
+        console.error("Unexpected API response:", response.data);
+      }
+    } catch (error) {
+      console.error(
+        "Error resetting bookings:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-200">
-      <div className="bg-white p-6 rounded-lg shadow-md w-2/3 flex flex-col md:flex-row">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col md:flex-row">
         <div className="flex-1">
           <h2 className="text-xl font-bold text-center mb-4">Ticket Booking</h2>
 
           {/* Seat Grid */}
+          {/* Seat Grid */}
           <div className="grid grid-cols-7 gap-2">
             {totalSeats &&
-              bookedSeats &&
-              Array.from(
-                { length: totalSeats },
-                (_, i) => `Row ${Math.floor(i / 7) + 1} Seat ${(i % 7) + 1}`
-              ).map((seat) => (
-                <div
-                  key={seat}
-                  className={`w-20 h-10 flex items-center justify-center rounded-md text-white font-bold transition ${
-                    bookedSeats.includes(seat) ? "bg-red-500" : "bg-green-500"
-                  }`}
-                >
-                  {seat}
-                </div>
-              ))}
+              Array.from({ length: totalSeats }, (_, i) => {
+                const row = Math.floor(i / 7) + 1; // Calculate row number
+                const seat = (i % 7) + 1; // Seat number in that row
+                const uniqueId = `${row}-${seat}`; // Unique seat ID
+
+                return (
+                  <div
+                    key={uniqueId}
+                    className={`w-20 h-10 gap-2 flex items-center justify-center rounded-md text-white font-bold transition ${
+                      bookedSeats.includes(uniqueId)
+                        ? "bg-red-500"
+                        : "bg-green-500"
+                    }`}
+                  >
+                    {`Row ${row} - Seat ${seat}`}
+                  </div>
+                );
+              })}
           </div>
 
           {/* Booking Status */}
@@ -238,8 +580,7 @@ const SeatBooking = () => {
               Booked Seats: {bookedSeats.length}
             </span>
             <span className="bg-green-500 px-3 py-1 rounded text-white">
-              Available Seats:{" "}
-              {availableSeats !== null ? availableSeats : "Loading..."}
+              Available Seats: {availableSeats}
             </span>
           </div>
         </div>
@@ -247,20 +588,27 @@ const SeatBooking = () => {
         {/* Booking Form */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <h3 className="text-lg font-bold mb-2">Book Seats</h3>
-          <form onSubmit={handleBookSeats} className="flex space-x-2">
+          <form onSubmit={handleBookSeats} className="grid grid-cols-2 gap-2">
             <input
               type="number"
               name="seats"
               placeholder="Enter number of seats (1-7)"
               min="1"
               max="7"
-              className="border rounded px-2 py-1"
+              className="border rounded px-2 py-1 col-span-2"
             />
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-1 rounded"
+              className="bg-blue-500 text-white px-4 py-1 rounded col-span-2"
             >
               Book
+            </button>
+            <button
+              type="button"
+              onClick={handleResetBookings}
+              className="bg-red-500 text-white px-4 py-1 rounded col-span-2"
+            >
+              Reset Booking
             </button>
           </form>
         </div>
