@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+//Seat Booking frontend code
 const SeatBooking = () => {
   const [totalSeats, setTotalSeats] = useState(80);
   const [bookedSeats, setBookedSeats] = useState([]);
